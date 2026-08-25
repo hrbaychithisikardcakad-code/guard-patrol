@@ -11,6 +11,30 @@
   <title>ระบบบันทึกจุดตรวจ รปภ.</title>
   <meta name="theme-color" content="#1e293b">
   
+  <!-- สคริปต์บังคับเปิดในเบราว์เซอร์หลัก (Chrome / Safari) เมื่อสแกนผ่าน LINE -->
+  <script>
+    (function redirectToExternalBrowser() {
+      var ua = navigator.userAgent || navigator.vendor || window.opera;
+      var isLine = ua.indexOf('Line') > -1 || ua.indexOf('LINE') > -1;
+      
+      if (isLine) {
+        var currentUrl = window.location.href;
+        // ถ้าเป็น Android ให้สลับไปเปิดด้วย Chrome ทันที
+        if (/Android/i.test(ua)) {
+          var chromeUrl = currentUrl.replace(/^https?:\/\//, '');
+          window.location.href = 'intent://' + chromeUrl + '#Intent;scheme=https;package=com.android.chrome;end';
+        } 
+        // ถ้าเป็น iOS ให้ต่อท้าย ?openExternalBrowser=1 เพื่อบังคับให้ LINE เปิดด้วย Safari
+        else if (/iPhone|iPad|iPod/i.test(ua)) {
+          if (currentUrl.indexOf('openExternalBrowser=1') === -1) {
+            var separator = currentUrl.indexOf('?') !== -1 ? '&' : '?';
+            window.location.href = currentUrl + separator + 'openExternalBrowser=1';
+          }
+        }
+      }
+    })();
+  </script>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -40,6 +64,12 @@
   <!-- Main Container -->
   <main class="flex-1 max-w-md w-full mx-auto p-4 space-y-5">
 
+    <!-- Alert บอร์ดเตือนกรณีที่ยังคงค้างอยู่ใน LINE -->
+    <div id="lineNotice" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 text-xs text-amber-300">
+      <i class="fa-solid fa-triangle-exclamation mr-1"></i> 
+      หากเปิดกล้องไม่ได้ กรุณากดปุ่ม <b>"..." (มุมขวาบน)</b> แล้วเลือก <b>"เปิดด้วยเบราว์เซอร์อื่น"</b> (Open in external browser)
+    </div>
+
     <!-- Card 1: Checkpoint Details -->
     <div class="bg-slate-800 rounded-2xl p-5 border border-slate-700 shadow-xl space-y-3">
       <div class="flex justify-between items-start">
@@ -50,7 +80,7 @@
       </div>
       
       <div>
-        <h2 id="checkpointName" class="text-xl font-bold text-white leading-snug">กำลังโหลดข้อมูล...</h2>
+        <h2 id="checkpointName" class="text-xl font-bold text-emerald-400 leading-snug">กำลังโหลดข้อมูล...</h2>
         <p id="checkpointIdText" class="text-xs text-slate-400 mt-1">ID: -</p>
       </div>
     </div>
@@ -71,7 +101,7 @@
         </div>
       </div>
 
-      <!-- Native Image Selection (เปิดกล้องมือถือสด) -->
+      <!-- Native Image Selection -->
       <div>
         <label class="block text-xs font-medium text-slate-300 mb-2">ถ่ายรูปหลักฐานจุดตรวจ (บังคับ 1 รูป) *</label>
         
@@ -150,18 +180,26 @@
       startClock();
       parseQueryParams();
       fetchGuardList();
+
+      var ua = navigator.userAgent || navigator.vendor || window.opera;
+      if (ua.indexOf('Line') > -1 || ua.indexOf('LINE') > -1) {
+        document.getElementById('lineNotice').classList.remove('hidden');
+      }
     });
 
     function parseQueryParams() {
       const urlParams = new URLSearchParams(window.location.search);
+      const cpParam = urlParams.get('checkpoint') || urlParams.get('cp') || 'จุดตรวจที่ 1';
+      const siteParam = urlParams.get('site') || 'SITE-001';
+
       queryParams = {
-        siteId: urlParams.get('site') || 'SITE-001',
-        checkpointId: urlParams.get('cp') || 'CP-01'
+        siteId: siteParam,
+        checkpointId: cpParam
       };
 
       document.getElementById('siteBadge').innerText = `SITE: ${queryParams.siteId}`;
-      document.getElementById('checkpointName').innerText = `จุดตรวจ ${queryParams.checkpointId}`;
-      document.getElementById('checkpointIdText').innerText = `Checkpoint ID: ${queryParams.checkpointId}`;
+      document.getElementById('checkpointName').innerText = queryParams.checkpointId;
+      document.getElementById('checkpointIdText').innerText = `รหัสอ้างอิง: ${queryParams.checkpointId}`;
     }
 
     function startClock() {
@@ -171,7 +209,6 @@
       }, 1000);
     }
 
-    // ดึงรายชื่อ รปภ. มาใส่ใน Dropdown
     async function fetchGuardList() {
       loadGuardOptions([
         { id: 'GD-001', name: 'นายสมศักดิ์ รักดี (GD-001)' },
@@ -196,7 +233,6 @@
       }
     }
 
-    // รับไฟล์รูป -> บีบอัดภาพ
     document.getElementById('nativeCameraInput').addEventListener('change', function (e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -249,7 +285,6 @@
       reader.readAsDataURL(file);
     });
 
-    // Form Submit
     document.getElementById('patrolForm').addEventListener('submit', async function (e) {
       e.preventDefault();
 
