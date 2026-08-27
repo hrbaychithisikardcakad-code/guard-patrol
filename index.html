@@ -379,7 +379,7 @@
         }
 
       } catch (error) {
-        Swal.fire('เกิดข้อผิดพลาด', error.message || 'ส่งข้อมูลสำเร็จ', 'success');
+        Swal.fire('เกิดข้อผิดพลาด', error.message || 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>ส่งรายงานจุดตรวจ</span>`;
