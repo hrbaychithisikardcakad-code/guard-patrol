@@ -177,7 +177,8 @@
   </footer>
 
   <script>
-    const GAS_ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbyOV2ui4T55StuZT6tG9cPKI8l_XgU4vU69bQXvZGINKRDFO7acyL6UyzxFk3KFkwVY/exec";
+    // URL Web App จาก Google Apps Script ล่าสุดของคุณ
+    const GAS_ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbz47L6NkEkkctMO7D063a8Tu9r1zOPZC6I1W3qcc9Z1GSOr86a9PV0lU4kIY-TdVwT6/exec";
 
     let compressedBase64Image = null;
     let queryParams = {};
@@ -196,7 +197,7 @@
     function parseQueryParams() {
       const urlParams = new URLSearchParams(window.location.search);
       const cpParam = urlParams.get('checkpoint') || urlParams.get('cp') || 'จุดตรวจที่ 1';
-      const siteParam = urlParams.get('site') || 'SITE-001';
+      const siteParam = urlParams.get('site') || 'SITE-ORGANICS';
 
       queryParams = {
         siteId: siteParam,
@@ -233,7 +234,6 @@
         select.appendChild(opt);
       });
 
-      // เพิ่มตัวเลือกสำหรับพิมพ์ชื่อเอง
       const customOpt = document.createElement('option');
       customOpt.value = "CUSTOM_INPUT";
       customOpt.textContent = "✏️ + กรอกชื่ออื่น ๆ เอง...";
@@ -379,7 +379,7 @@
         }
 
       } catch (error) {
-        Swal.fire('เกิดข้อผิดพลาด', error.message || 'ส่งข้อมูลสำเร็จ', 'success');
+        Swal.fire('เกิดข้อผิดพลาด', error.message || 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>ส่งรายงานจุดตรวจ</span>`;
